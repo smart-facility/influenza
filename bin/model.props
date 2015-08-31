@@ -1,0 +1,25 @@
+# VirtualBelgium configuration file
+# =================================
+#
+# Authors: J. Barthelemy, L. E. C. Rocha
+# Date   : August 2015
+
+# Parameters
+# **********
+
+# input files
+
+#file.agenda     = ../data/test_act_chains.xml
+file.agenda     = ../data/activity_chains_2001_namur.xml
+file.network    = ../data/belgium_medium_network.xml
+
+# model
+#stop = 86400
+stop = 86400
+
+# infection parameters
+
+n.infected            = 1
+disease.starting.node = 294988288
+
+
