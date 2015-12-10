@@ -93,8 +93,10 @@ class Data : public Singleton<Data> {
 
 private:
 
-	Network            _network;           //!< network.
-	repast::Properties _props;             //!< properties of simulation.
+	Network            _network;                     //!< network.
+	repast::Properties _props;                       //!< properties of simulation.
+	std::map<int, int> _map_nodes_orig_id_new_id;  //!< map linking the original id of a node to the generated one
+	std::map<int, int> _map_nodes_new_id_orig_id;  //!< map linking the original id of a node to the generated one
 
 public:
 
@@ -135,6 +137,10 @@ public:
 		return _network;
 	}
 
+	const std::map<int, int>& getMapNodesOrigIdNewId() const {
+		return _map_nodes_orig_id_new_id;
+	}
+
 };
 
 
@@ -155,7 +161,7 @@ public :
 	//! Destructor.
 	~AggregateSum() {};
 
-	//! Reset sum to 0.
+	//! Set data to a given value.
 	void setData(int val);
 
 	//! Increment the data by 1.
@@ -164,6 +170,9 @@ public :
 	//! Decrement the data by 1.
 	void decrementData();
 
+	//! Reset the data to 0.
+	void resetData();
+
 	//! Return the current state of sum.
 	/*!
     \return the value of sum
@@ -171,7 +180,6 @@ public :
 	int getData();
 
 };
-
 
 /////////////////////////////
 //  Some useful routines.  //
@@ -184,7 +192,7 @@ public :
 
   \return the number of seconds elapsed since midnight
  */
-long timeToSec( const std::string &aTime );
+long timeToSec(const std::string &aTime );
 
 
 //! Decompose a string according to a separator into a vector of type T.
@@ -195,7 +203,25 @@ long timeToSec( const std::string &aTime );
  \return a vector of type T
  */
 template<typename T>
-std::vector<T> split(const std::string & msg, const std::string & separators);
+std::vector<T> split(const std::string & msg, const std::string & separators) {
+
+	std::vector<T> result;                                              // resulting vector
+	T              token;                                          // one token of the string
+	boost::char_separator<char> sep(separators.c_str());           // separator
+	boost::tokenizer<boost::char_separator<char> > tok(msg, sep);  // token's generation
+
+	// loop over every token and cast to desired type
+	for (boost::tokenizer<boost::char_separator<char> >::const_iterator i = tok.begin(); i != tok.end(); i++) {
+		std::stringstream s(*i);
+		std::string s_string = s.str();                                  // getting the string
+	    boost::algorithm::trim(s_string);                           // removing trailing blanks
+	    token = boost::lexical_cast<T>( s_string );                 // casting operator
+		result.push_back(token);
+	}
+
+	return result;                                                  // returning the resulting decomposition
+
+}
 
 
 #endif /* DATA_HPP_ */

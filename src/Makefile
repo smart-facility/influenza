@@ -1,4 +1,3 @@
-
 SOURCES   = $(wildcard *.cpp)
 OBJECTS   = $(SOURCES:.cpp=.o)
 BIN_DIR   = ../bin/
@@ -6,6 +5,8 @@ LIBS      = -lboost_system -lboost_mpi -lboost_serialization -lboost_filesystem 
 INC_XML   = -I/usr/include/libxml++-2.6 -I/usr/lib64/libxml++-2.6/include -I/usr/include/libxml2 -I/usr/include/glibmm-2.4 -I/usr/lib64/glibmm-2.4/include -I/usr/include/glib-2.0 -I/usr/lib64/glib-2.0/include -I/usr/include/sigc++-2.0 -I/usr/lib64/sigc++-2.0/include
 
 debug : all
+profile_use : all
+profile_gen : all
 all : $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(OBJECTS) $(LIBS) -o $(BIN_DIR)$(EXEC_NAME)
 

@@ -16,13 +16,19 @@
 #ifndef INDIVIDUAL_HPP_
 #define INDIVIDUAL_HPP_
 
-#include "repast_hpc/AgentId.h"
 #include <boost/serialization/access.hpp>
+#include <boost/lexical_cast.hpp>
 #include <vector>
 #include <iostream>
+#include "repast_hpc/AgentId.h"
+#include "repast_hpc/Random.h"
 #include "Activity.hpp"
 
 const int MODEL_AGENT_IND_TYPE = 0;     //!< constant for the individual agent type
+
+enum class state_inf : unsigned int { SUSCEPTIBLE = 1, LATENT = 2, INFECTIOUS_SYMPT = 3, INFECTIOUS_ASYMPT = 4, RECOVERED = 5 };
+std::ostream& operator<<(std::ostream& out, const state_inf &state);
+
 
 //! \brief The package structure for Individual agents.
 /*!
@@ -42,13 +48,14 @@ struct IndividualPackage {
 	char                  gender;             //!< Individual's gender.
 	char                  socio_pro_status;   //!< Individual's socio-professional status.
 	char                  edu_level;          //!< Individual's education level.
-	bool                  sick;               //!< Individual's sickness status.
+	state_inf             state;              //!< Individual's sickness status.
+	int                   time_next_state;    //!< Individual's time before next state transition.
 
 	//! Default constructor.
 	IndividualPackage();
 	//! Complete constructor.
 	IndividualPackage(int aId, int aInitProc, int aAgentType, int aCurProc, std::vector<Activity> aAgenda, int aCurAct ,int aAgeCl,
-			char aGender, char aSocioProStatus, char aEduLevel, bool aSick);
+			char aGender, char aSocioProStatus, char aEduLevel, state_inf aState, int aTime);
 
 	//! Serializing procedure of the package.
 	/*!
@@ -67,8 +74,9 @@ struct IndividualPackage {
 		ar &gender;
 		ar &socio_pro_status;
 		ar &edu_level;
-		ar &sick;
-	}
+		ar &state;
+		ar &time_next_state;
+	};
 
 };
 
@@ -97,19 +105,19 @@ private :
 	char                  _gender;             //!< Individual's gender.
 	char                  _socio_pro_status;   //!< Individual's socio-professional status.
 	char                  _edu_level;          //!< Individual's education level.
-	bool                  _sick;               //!< Individual's sickness status.
-	//std::vector<int>      _contacts            //!< Individual's list of contacts.
+	state_inf             _state;              //!< Individual's sickness status.
+	int                   _time_next_state;    //!< Individual's time before becoming infectious.
 
 public :
 
 	//! Constructors.
 	Individual();
-	Individual(repast::AgentId id, std::vector<Activity> aAgenda, int aCurAct, int aAgeCl, char aGender, char aSocioProStatus, char aEduLevel, bool aSick);
+	Individual(repast::AgentId id, std::vector<Activity> aAgenda, int aCurAct, int aAgeCl, char aGender, char aSocioProStatus, char aEduLevel, state_inf aState, int aTime);
 	Individual(repast::AgentId id, int aAgeCl, char aGender, char aSocioProStatus, char aEduLevel);
 	Individual(repast::AgentId id, std::vector<Activity> aAgenda);
 
 	//! Destructor.
-	virtual ~Individual() ;
+	virtual ~Individual();
 
 	//! Return the individual Repast agent id (required by Repast).
 	/*!
@@ -167,12 +175,12 @@ public :
 		_gender = gender;
 	}
 
-	bool isSick() const {
-		return _sick;
+	state_inf getState() const {
+		return _state;
 	}
 
-	void setSick(bool sick) {
-		_sick = sick;
+	void setState(state_inf state) {
+		_state = state;
 	}
 
 	char getSocioProStatus() const {
@@ -183,11 +191,17 @@ public :
 		_socio_pro_status = socioProStatus;
 	}
 
+	int getTimeTransition() const {
+		return _time_next_state;
+	}
+
+	void setTimeTransition(int aTime) {
+		_time_next_state = aTime;
+	}
+
 	long getHouseNodeId() const;
 
-	int getTimeToNextActivity() const;
-
-	long getNodeId() const;
+	long getCurActNodeId() const;
 
 	void addActivity(const Activity& aActivity);
 
@@ -202,6 +216,14 @@ public :
 
 	//! Overloading << operator.
 	friend std::ostream& operator<<(std::ostream& out, const Individual &ind);
+
+	bool isLatent( float aInfectionProba );
+
+	void decreaseTimeTransition();
+
+	void determineInfectiousType( float aInfectionTypeProba );
+
+	bool resetSchedule( int aTime );
 
 };
 

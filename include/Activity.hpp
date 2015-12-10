@@ -25,7 +25,7 @@ private:
 		  ar &_type;
 	  }
 
-	long _node_id;    //!< id of the node where the activity takes place
+	int _node_id;    //!< id of the node where the activity takes place
 	int  _start_time; //!< starting time of the activity
 	int  _end_time;   //!< duration of the activity
 	char _type;       //!< type of the activity

@@ -17,7 +17,6 @@
 
 #include "Individual.hpp"
 #include "Data.hpp"
-#include "tinyxml2.hpp"
 #include "SaxParser.hpp"
 #include "Network.hpp"
 
@@ -30,6 +29,10 @@
 #include "repast_hpc/logger.h"
 #include "repast_hpc/initialize_random.h"
 #include "repast_hpc/SVDataSetBuilder.h"
+#include "repast_hpc/Point.h"
+#include "repast_hpc/SharedDiscreteSpace.h"
+#include "repast_hpc/GridComponents.h"
+#include "repast_hpc/Moore2DGridQuery.h"
 
 #include <sstream>
 #include <cstdlib>
@@ -61,17 +64,38 @@ class Model {
 
   int                            _proc;                         //!< rank of the model's process
   repast::Properties&            _props;                        //!< properties of the model
-  repast::SVDataSet*             _data_collection;              //!< aggregated output data set
+
   Network                        _network;                      //!< road network
-  AggregateSum                   _total_agents;                 //!< number of agents remaining in the simulation
-  AggregateSum                   _total_infected;               //!< total number of agents infected
-  AggregateSum                   _total_nodes_infected;         //!< total number of nodes currently infected
-  std::map<long, int>            _map_node_process;             //!< map containing identifying the process of every node
+
+  // Aggregate outputs
+
+  repast::SVDataSet*             _data_collection;              //!< aggregated output data set
+  AggregateSum _total_susceptible;
+  AggregateSum _total_latent;
+  AggregateSum _total_infectious_asympt;
+  AggregateSum _total_infectious_sympt;
+  AggregateSum _total_recovered;
+  AggregateSum _total_nodes_infected;
+
+  // Model parameters
+
+  float _r_beta;
+  float _beta;
+  float _epsilon;
+  float _p_a;
+  float _mu;
+  float _max_inf;
+  float _r_beta_x_beta;
+
+  // Synch variables
+
+  std::map<int, int>             _map_node_process;             //!< map containing identifying the process of every node
   std::map<repast::AgentId, int> _map_agents_to_move_process;   //!< map of the agents to be moved to other processes
 
- public :
+  repast::SharedContext<Individual>* _agents;                    //!< shared context containing the individual agents of the simulation
+  repast::SharedDiscreteSpace<Individual, repast::WrapAroundBorders, repast::SimpleAdder<Individual> >* _discrete_space; //!< spatial projection of the simulation.
 
-  repast::SharedContext<Individual>* agents;               //!< Shared context containing the individual agents of the simulation
+ public :
 
   //! Constructor.
   /*
@@ -82,7 +106,6 @@ class Model {
 
   //! Destructor.
   ~Model();
-  
 
   //! Model agents initialization (MATSim input format).
   void init_agents_sax();
@@ -101,7 +124,7 @@ class Model {
     \param agent the agent to exchange
     \param out the package containing the agent to exchange
    */
-  void providePackage(Individual * agent , std::vector<IndividualPackage>& out);
+  void providePackage(Individual* agent , std::vector<IndividualPackage>& out);
 
   //! Used by Repast HPC to create an Individual Agent from an IndividualPackage.
   /*!
@@ -109,7 +132,7 @@ class Model {
     
     \return an individual agent
    */
-  Individual * createAgent(IndividualPackage package);
+  Individual* createAgent(IndividualPackage package);
 
   //! Used by Repast HPC to packaged requested agents.
   /*!
@@ -132,20 +155,40 @@ class Model {
   //! Constructing the map of processes' nodes
   void constructMapNodeProcess();
 
-  //! Check if the (x,y) coordinates belongs to the process local continuous space.
+  //! Check if a node belongs to the current process
   /*!
-    \param x a x coordinate
-    \param y a y coordinate
+    \param nodeId the node to check
 
-    \return true if (x,y) in local continuous space, false otherwise
+    \return true if the node belongs to the process, false otherwise
    */
-  bool isInLocalBounds(long nodeId);
+  bool isInLocalBounds(int nodeId);
 
-  const std::map<long, int>& getMapNodeProcess() const;
+  //! Return the map associating the nodes id to their respective process
+  /*!
+    \return a map
+   */
+  const std::map<int, int>& getMapNodeProcess() const;
 
-  void initInfectAgents(int n);
+  //! Infect the agents
+  void initInfectAgents();
 
-  void infectAgent(Individual *ind);
+  //! Infect the agents
+  void initInfectAgents(std::vector<int> nodeIds, std::vector<int> nAgents, state_inf s);
+
+  //! Adding an agent to the model SharedContext
+  void addAgent(Individual* agent) {
+	  _agents->addAgent(agent);
+  }
+
+  //! Move an agent to a given node
+  void moveAgentToNode(repast::AgentId aId, int aNodeId) {
+	  repast::Point<int> location(aNodeId, 0);
+	  _discrete_space->moveTo(aId, location);
+  }
+
+  void gatherDataInd(const Individual& aInd);
+
+  void resetDataInd();
 
 };
 

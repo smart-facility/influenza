@@ -2,24 +2,41 @@
 # =================================
 #
 # Authors: J. Barthelemy, L. E. C. Rocha
-# Date   : August 2015
+# Date   : December 2015
 
 # Parameters
 # **********
 
+# adding a parameter to define time between records
+
 # input files
 
-#file.agenda     = ../data/test_act_chains.xml
-file.agenda     = ../data/activity_chains_2001_namur.xml
-file.network    = ../data/belgium_medium_network.xml
+#file.agenda = ../data/act_debug.xml
+#file.agenda  = ../data/activity_chains_2001_namur.xml
+file.agenda  = ../data/activity_chains_2001.xml
+file.network = ../data/belgium_medium_network.xml
 
-# model
-#stop = 86400
-stop = 86400
+# number of simulated seconds
+stop = 172800
 
 # infection parameters
 
-n.infected            = 1
-disease.starting.node = 294988288
+# ... nodes id where the infection will start (separated by commas)
+infection.asympt.starting.node = 309099188,302013180
+infection.sympt.starting.node  = 309099188
 
+# ... number of agents infected per starting node (separated by commas)
+n.infected.asympt = 1,2
+n.infected.sympt  = 1
+
+r.beta      = 1
+beta        = 0.001
+#epsilon.inv = 1.9
+epsilon.inv = 0.526315789
+p.a         = 0.33
+#mu.inv      = 3
+mu.inv      = 0.333333333
+max.inf     = 20
+
+random.seed = 314155646
 

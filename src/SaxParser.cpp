@@ -23,26 +23,6 @@ void VBSaxParser::on_end_document() {
 //     -> adding the ind to the context
 void VBSaxParser::on_start_element(const Glib::ustring& name, const AttributeList& attributes) {
 
-	/*
-  static Individual* cur_ind = NULL;
-
-  // new individual
-  if( name.compare("person") == 0 ) {
-	// adding the previous individual to the context if it belongs to the current proc
-	if( cur_ind != NULL && _model.getMapNodeProcess().at(cur_ind->getHouseNodeId()) == _proc ) {
-		_model.agents->addAgent(cur_ind);
-		std::cout << cur_ind;
-	}
-	// starting the creation of a new individual
-    cur_ind = on_individual(attributes);
-  }
-
-  // generating the agenda of the current individual
-  if( name.compare("act") == 0 ) {
-    on_activity(attributes, cur_ind);
-  }
-	 */
-
 	static Individual* cur_ind = NULL;
 
 	if( name.compare("person") == 0 ) {
@@ -56,8 +36,8 @@ void VBSaxParser::on_start_element(const Glib::ustring& name, const AttributeLis
 		// if activity = m and associated node belongs to the current proc, add the agent to the context
 		if( _model.getMapNodeProcess().at(cur_ind->getHouseNodeId()) == _proc
 				&& cur_ind->getAgenda().size() == 1) {
-			_model.agents->addAgent(cur_ind);
-			//std::cout << "INFO: Proc " << _proc << " added agent " << cur_ind->getId().id() << std::endl;
+			_model.addAgent(cur_ind);
+			_model.moveAgentToNode(cur_ind->getId(),cur_ind->getHouseNodeId());
 		}
 
 	}
@@ -95,20 +75,28 @@ Individual* VBSaxParser::on_individual(const AttributeList &attributes) {
 void VBSaxParser::on_activity(const AttributeList &attributes, Individual *ind ) {
 
 	char type;
-	long node_id = -1; // -1 indicates that it is the last activity of the day, ie return to home
+	int node_id = -1; // -1 indicates that it is the last activity of the day, ie return to home
 	int duration = -1;
-	int end_time;
+	int end_time = -1;
 
-	static long house_id = -1;
+	static int house_id = -1;
 
 	for(xmlpp::SaxParser::AttributeList::const_iterator iter = attributes.begin(); iter != attributes.end(); ++iter) {
 		if(iter->name.compare("type")     == 0) type     = boost::lexical_cast<char>(iter->value.raw());
 		if(iter->name.compare("end_time") == 0) end_time = timeToSec(iter->value.raw());
 		if(iter->name.compare("duration") == 0) duration = boost::lexical_cast<int>(floor(boost::lexical_cast<float>(iter->value.raw())));
-		if(iter->name.compare("node_id")  == 0) node_id  = boost::lexical_cast<long>(iter->value.raw());
+		if(iter->name.compare("node_id")  == 0) node_id  = boost::lexical_cast<int>(iter->value.raw());
 	}
 
 	int start_time = end_time - duration;
+	while( start_time < 0 ) {
+		start_time = start_time + 86400;
+	}
+
+	// determine the node id (transforming the original id)
+	if( node_id != -1 ) {
+		node_id = Data::getInstance()->getMapNodesOrigIdNewId().at(node_id);
+	}
 
 	// determine the house id
 	if( node_id != -1 && type == 'm' ) {
@@ -116,6 +104,9 @@ void VBSaxParser::on_activity(const AttributeList &attributes, Individual *ind )
 	}
 	if( node_id == -1 ) {
 		node_id = house_id;
+	}
+	if( end_time == -1 ) {
+		start_time = -1;
 	}
 
 	// creating the activity

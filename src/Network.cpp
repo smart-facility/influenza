@@ -14,16 +14,16 @@ using namespace std;
 
 // Constructor
 
-Node::Node() : _id(-1), _x(0), _y(0), _infected(0) {
+Node::Node() : _id(-1), _infected(0) {
 
 }
 
-Node::Node(long id, float x, float y, int infected, vector<int> ind) :
-          _id(id), _x(x), _y(y), _infected(infected), _ind(ind) {
+Node::Node(int id, int infected) :
+          _id(id), _infected(infected) {
 }
 
-Node::Node(long id, float x, float y) :
-          _id(id), _x(x), _y(y), _infected(0), _ind() {
+Node::Node(int id) :
+          _id(id), _infected(0) {
 }
 
 Network::Network() : _Nodes(), _n_infected_nodes(0) {
@@ -33,5 +33,19 @@ Network::Network() : _Nodes(), _n_infected_nodes(0) {
 void Network::addNode(Node aNode) {
 
   _Nodes.insert(make_pair(aNode.getId(), aNode));
+
+}
+
+void Network::dumpNodes() {
+
+	ofstream f_out;
+	f_out.open("dump_nodes", ios::out);
+
+	for( auto n : _Nodes ) {
+
+		f_out << n.second.getId() << endl;
+
+	}
+	f_out.close();
 
 }

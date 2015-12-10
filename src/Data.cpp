@@ -38,34 +38,27 @@ void Data::read_network() {
 	XMLElement * ele = doc.FirstChildElement("network")->FirstChildElement("nodes")->FirstChildElement("node");
 	const XMLAttribute * attr;
 
-	long int i = 1;
+	int i = 0;
 	while (ele) {
+
+		// reading id
+		attr = ele->FirstAttribute();
+		int id = attr->IntValue();
+		this->_map_nodes_orig_id_new_id[id] = i;
+		this->_map_nodes_new_id_orig_id[i]  = id;
 
 		// only add the nodes of the current process
 		if ( i % n_proc == cur_proc ) {
-
-			// reading id
-			attr = ele->FirstAttribute();
-			long id = attr->LongValue();
-
-			// reading x coordinate
-			attr = attr->Next();
-			float x = attr->FloatValue();
-
-			// reading y coordinate
-			attr = attr->Next();
-			float y = attr->FloatValue();
-
-			// adding the node to the network
-			Node currNode(id, x, y);
+			Node currNode(i);
 			this->_network.addNode(currNode);
-
 		}
 
 		ele = ele->NextSiblingElement("node");
 		i++;
 
 	}
+
+	if ( cur_proc == 0 ) cout << "INFO: DATA GENERATION: Number total of nodes read " << i << endl;
 
 	if (cur_proc == 0) cout << "... done! " << endl;
 
@@ -97,38 +90,19 @@ int AggregateSum::getData() {
 	return _sum;
 }
 
+void AggregateSum::resetData() {
+	_sum = 0;
+}
+
 
 ///////////////////////
 // Some useful tools //
 ///////////////////////
 
 
-long timeToSec( const std::string &aTime ) {
+long timeToSec(const std::string &aTime ) {
 
-	std::vector<long> time = split<long>(aTime, ":");
+	vector<long> time = split<long>(aTime, ":");
 	return time[0] * 3600 + time[1] * 60 + time[2];
 
-}
-
-template<typename T>
-std::vector<T> split(const std::string & msg, const std::string & separators) {
-
-	std::vector<T> result;                                         // resulting vector
-	T              token;                                          // one token of the string
-	boost::char_separator<char> sep(separators.c_str());           // separator
-	boost::tokenizer<boost::char_separator<char> > tok(msg, sep);  // token's generation
-
-	// string decomposition into token
-	for (boost::tokenizer<boost::char_separator<char> >::const_iterator i = tok.begin(); i != tok.end(); i++) {
-
-		std::stringstream s(*i);
-		string s_string = s.str();                                   // getting the string
-	    boost::algorithm::trim(s_string);                            // removing trailing blanks
-	    token = boost::lexical_cast<T>( s_string );                  // casting operator
-
-		result.push_back(token);
-	}
-
-	// returning the resulting decomposition
-	return result;
 }
