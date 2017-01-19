@@ -21,7 +21,7 @@
 #include "repast_hpc/io.h"
 #include "repast_hpc/logger.h"
 #include "repast_hpc/Utilities.h"
-#include "repast_hpc/initialize_random.h"
+//#include "repast_hpc/initialize_random.h"
 #include <boost/mpi.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/lexical_cast.hpp>

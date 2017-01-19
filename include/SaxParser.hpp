@@ -3,6 +3,7 @@
 
 #include <libxml++/libxml++.h>
 #include <vector>
+
 #include <repast_hpc/AgentId.h>
 #include <repast_hpc/SharedContext.h>
 #include "Individual.hpp"
@@ -10,6 +11,7 @@
 #include "Data.hpp"
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include "repast_hpc/Random.h"
 
 class Model;
 
@@ -18,7 +20,7 @@ class VBSaxParser : public xmlpp::SaxParser {
 private:
   int _proc;
   Model& _model;
-
+  
 public:
   VBSaxParser(int aProc, Model& aModel);
   virtual ~VBSaxParser();

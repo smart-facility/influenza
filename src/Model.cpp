@@ -5,7 +5,7 @@
  * Model.hpp (see this file for methods' documentation)
  *
  * Authors: J. Barthelemy
- * Date   : 11 june 2014
+ * Date   : 18 January 2017
  ****************************************************************/
 
 #include "../include/Model.hpp"
@@ -26,7 +26,7 @@ Model::Model( boost::mpi::communicator* world, Properties & props ) : _props(pro
 	_network = Data::getInstance()->getNetwork();
 
 	// dumping nodes in a file
-	//_network.dumpNodes();
+	_network.dumpNodes(_proc);
 
 	// process nodes recording
 	for( auto n : _network.getNodes() ) {
@@ -37,31 +37,46 @@ Model::Model( boost::mpi::communicator* world, Properties & props ) : _props(pro
 	// Spatial projection construction --------------------------------
 
 	int n_nodes = _map_node_process.size();
+	int n_proc = world->size();
+	n_nodes = n_nodes + 1 + (n_proc - (n_nodes + 1) % n_proc);
 	if (_proc == 0 ) {
 		cout << "INFO: MODEL CONSTRUCTOR: total number of nodes: " << n_nodes << endl;
 	}
 
-	Point<double> origin(0,0);
-	Point<double> extent(n_nodes,1);
+	Point<double> origin(0, 0);
+	Point<double> extent(n_nodes, 2); // + 1 and 2 since GridDim = [origin, origin + extent[
 	GridDimensions grid_dim(origin, extent);
 	vector<int> process_dims;
 	process_dims.push_back(world->size());
 	process_dims.push_back(1);
 
-	_discrete_space = new SharedDiscreteSpace<Individual, WrapAroundBorders,SimpleAdder<Individual>>("AgentDiscreteSpace", grid_dim, process_dims, 0, world);
+	// TODO: change to strictborder
+	_discrete_space = new SharedDiscreteSpace<Individual, StrictBorders, SimpleAdder<Individual>>("AgentDiscreteSpace", grid_dim, process_dims, 0, world);
 	_agents->addProjection(_discrete_space);
+
+	 _moore2DQuery = new Moore2DGridQuery<Individual>(_discrete_space);
+	
+	// querry method applied on the discrete space
+	// todo: move to definition of Spatial Projection
+	//Moore2DGridQuery<Individual> moore2DQuery(_discrete_space);
+	//_moore2DQuery = moore2DQuery;
+	
+
 
 	cout << "INFO: Proc " << _proc << ": Dimensions: " << _discrete_space->dimensions() << endl;
 
 	// Model parameters -----------------------------------------------
 
-	_r_beta      = boost::lexical_cast<float>(_props.getProperty("r.beta"));
-	_beta        = boost::lexical_cast<float>(_props.getProperty("beta"));
-	_epsilon = 1 / boost::lexical_cast<float>(_props.getProperty("epsilon.inv"));
-	_p_a         = boost::lexical_cast<float>(_props.getProperty("p.a"));
-	_mu      = 1/  boost::lexical_cast<float>(_props.getProperty("mu.inv"));
-	_max_inf     = boost::lexical_cast<float>(_props.getProperty("max.inf"));
+	_r_beta  = boost::lexical_cast<float>(_props.getProperty("r.beta"));
+	_beta    = boost::lexical_cast<float>(_props.getProperty("beta"));
+	_epsilon = 1.0 / boost::lexical_cast<float>(_props.getProperty("epsilon.inv"));
+	_p_a     = boost::lexical_cast<float>(_props.getProperty("p.a"));
+	_mu      = 1.0 / boost::lexical_cast<float>(_props.getProperty("mu.inv"));
+	_max_inf = boost::lexical_cast<float>(_props.getProperty("max.inf"));
 
+	_time_step = boost::lexical_cast<float>(_props.getProperty("time.step"));
+	_sample_size = boost::lexical_cast<float>(_props.getProperty("sample.size"));
+	
 	_r_beta_x_beta = _r_beta * _beta;
 
 	// Random generators --------------------------------------------
@@ -97,8 +112,10 @@ Model::Model( boost::mpi::communicator* world, Properties & props ) : _props(pro
 }
 
 
-Model::~Model() {
+Model::~Model() {        
 	delete _agents;
+	delete _moore2DQuery;
+	// delete the random generators + querry?
 }
 
 
@@ -106,13 +123,11 @@ void Model::init_agents_sax() {
 
 	VBSaxParser parser(_proc, *this);
 	string input_xml_file = this->_props.getProperty("file.agenda");
-	try
-	{
-		parser.set_substitute_entities(true);
-		parser.parse_file(input_xml_file);
+	try {
+	        parser.set_substitute_entities(true);
+	        parser.parse_file(input_xml_file);
 	}
-	catch(const xmlpp::exception& ex)
-	{
+	catch(const xmlpp::exception& ex) {
 		cerr << "libxml++ exception: " << ex.what() << endl;
 	}
 
@@ -120,14 +135,11 @@ void Model::init_agents_sax() {
 
 
 void Model::synch_agents() {
-
-	/*
-	for(auto a : _map_agents_to_move_process) {
-		cout << "INFO: SYNC - Proc " << _proc << " sending agent " << a.first.id() << " to proc " << a.second << endl;
-	}
-	 */
-
-
+	
+  //for(auto a : _map_agents_to_move_process) {
+  //	cout << "INFO: SYNC - Proc " << _proc << " sending agent " << a.first.id() << " to proc " << a.second << endl;
+  //	}
+	
 	_discrete_space->balance(_map_agents_to_move_process);
 	repast::RepastProcess::instance()->synchronizeAgentStatus<Individual,IndividualPackage,Model,Model,Model>(*this->_agents, *this, *this, *this);
 
@@ -218,9 +230,8 @@ void Model::step() {
 	// clearing the map containing the agents to be moved between processes
 	_map_agents_to_move_process.clear();
 
-	// querry method applied on the discrete space
-	Moore2DGridQuery<Individual> moore2DQuery(_discrete_space);
-
+	//Moore2DGridQuery<Individual> moore2DQuery(_discrete_space);
+	
 	// Loop over every agents
 
 	auto it_agent = (*_agents).localBegin();
@@ -264,7 +275,7 @@ void Model::step() {
 				// queries agent on a node
 				vector<Individual*> agents_on_node;
 				Point<int> node_location(agt_location[0], 0);
-				moore2DQuery.query(node_location, 0, true, agents_on_node);
+				_moore2DQuery->query(node_location, 0, true, agents_on_node);
 
 				// loop on the agents
 				int n_interactions = 0;
@@ -422,8 +433,8 @@ void Model::initInfectAgents(std::vector<int> nodeIds, std::vector<int> nAgents,
 		// queries agent on a node
 		vector<Individual*> agents_on_node;
 		Point<int> node_location(node_id, 0);
-		Moore2DGridQuery<Individual> moore2DQuery(_discrete_space);
-		moore2DQuery.query(node_location, 0, true, agents_on_node);
+		//Moore2DGridQuery<Individual> moore2DQuery(_discrete_space);
+		_moore2DQuery->query(node_location, 0, true, agents_on_node);
 
 		if( _map_node_process.at(node_id) == _proc ) {
 
@@ -485,4 +496,9 @@ void Model::resetDataInd() {
 	_total_infectious_asympt.resetData();
 	_total_infectious_sympt.resetData();
 	_total_recovered.resetData();
+}
+
+
+float Model::getSampleSize() const {
+  return _sample_size;
 }

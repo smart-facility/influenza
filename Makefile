@@ -6,12 +6,12 @@
 # -------------------------------------
 
 export CXX                = mpicxx 
-export CXXFLAGS           = -Wall -O3 -DNDEBUG -march='native' -mtune='native' -flto -std=c++11
-export CXXFLAGS_PROF_GEN  = -Wall -O3 -march='native' -mtune='native' -std=c++11 -flto -fprofile-generate
-export CXXFLAGS_PROF_USE  = -Wall -O3 -march='native' -mtune='native' -std=c++11 -flto -fprofile-use
+export CXXFLAGS           = -Wall -Wno-deprecated -O3 -DNDEBUG -march='native' -mtune='native' -flto -Wdeprecated-declarations
+export CXXFLAGS_PROF_GEN  = -Wall -O3 -march='native' -mtune='native' -flto -fprofile-generate
+export CXXFLAGS_PROF_USE  = -Wall -O3 -march='native' -mtune='native' -flto -fprofile-use
 export EXEC_NAME          = influenza
 
-CXXFLAGSDEBUG  = -Wall -O0 -ggdb -pg -std=c++11
+CXXFLAGSDEBUG  = -Wall -O0 -ggdb -pg
 
 SRC_DIR   = ./src/
 BIN_DIR   = ./bin/

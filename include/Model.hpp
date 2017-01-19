@@ -87,14 +87,19 @@ class Model {
   float _max_inf;
   float _r_beta_x_beta;
 
+  int _time_step;
+  float _sample_size;
+  
   // Synch variables
 
   std::map<int, int>             _map_node_process;             //!< map containing identifying the process of every node
   std::map<repast::AgentId, int> _map_agents_to_move_process;   //!< map of the agents to be moved to other processes
 
+  // Contexts and projections
   repast::SharedContext<Individual>* _agents;                    //!< shared context containing the individual agents of the simulation
-  repast::SharedDiscreteSpace<Individual, repast::WrapAroundBorders, repast::SimpleAdder<Individual> >* _discrete_space; //!< spatial projection of the simulation.
-
+  repast::SharedDiscreteSpace<Individual, repast::StrictBorders, repast::SimpleAdder<Individual> >* _discrete_space; //!< spatial projection of the simulation.
+  repast::Moore2DGridQuery<Individual>* _moore2DQuery;                 //!< querry on the spatial projection
+  
  public :
 
   //! Constructor.
@@ -152,10 +157,10 @@ class Model {
   	return _props;
   }
 
-  //! Constructing the map of processes' nodes
+  //! Constructing the map of processes' nodes.
   void constructMapNodeProcess();
 
-  //! Check if a node belongs to the current process
+  //! Check if a node belongs to the current process.
   /*!
     \param nodeId the node to check
 
@@ -163,31 +168,39 @@ class Model {
    */
   bool isInLocalBounds(int nodeId);
 
-  //! Return the map associating the nodes id to their respective process
+  //! Return the map associating the nodes id to their respective process.
   /*!
     \return a map
    */
   const std::map<int, int>& getMapNodeProcess() const;
 
-  //! Infect the agents
+  //! Infect the agents.
   void initInfectAgents();
 
-  //! Infect the agents
+  //! Infect the agents.
   void initInfectAgents(std::vector<int> nodeIds, std::vector<int> nAgents, state_inf s);
 
-  //! Adding an agent to the model SharedContext
+  //! Adding an agent to the model SharedContext.
   void addAgent(Individual* agent) {
 	  _agents->addAgent(agent);
   }
 
-  //! Move an agent to a given node
+  //! Move an agent to a given node.
   void moveAgentToNode(repast::AgentId aId, int aNodeId) {
 	  repast::Point<int> location(aNodeId, 0);
 	  _discrete_space->moveTo(aId, location);
   }
 
+  //! Return the sample size
+  float getSampleSize() const;
+
+  //! Save the data from an agent to the aggregate dataset
+  /*!
+    \param aInd the individual agent
+   */
   void gatherDataInd(const Individual& aInd);
 
+  //! Reset the counters of the aggregate dataset to 0
   void resetDataInd();
 
 };

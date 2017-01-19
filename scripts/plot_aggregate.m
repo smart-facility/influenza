@@ -1,10 +1,11 @@
 clc
-close all
+%close all
 clear
 
-Data = dlmread('../output/sim_out_20.csv',';',1,0);
+Data = dlmread('../output/sim_out_67.csv',';',1,0);
 Data(:,1) = Data(:,1) / 3600;
 
+figure
 plot(Data(:,1),Data(:,2))
 hold all
 plot(Data(:,1),Data(:,3))

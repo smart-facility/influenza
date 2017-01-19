@@ -7,21 +7,27 @@
 # Parameters
 # **********
 
-# adding a parameter to define time between records
+# sample size (proportion, in the range ]0,1])
+sample.size = 0.25
 
 # input files
 
 #file.agenda = ../data/act_debug.xml
-#file.agenda  = ../data/activity_chains_2001_namur.xml
-file.agenda  = ../data/activity_chains_2001.xml
+file.agenda = ../data/activity_chains_2001_namur.xml
+#file.agenda  = ../data/activity_chains_2001.xml
 file.network = ../data/belgium_medium_network.xml
 
 # number of simulated seconds
 stop = 172800
+#stop = 86400
+
+# time step in seconds
+time.step = 300
 
 # infection parameters
 
 # ... nodes id where the infection will start (separated by commas)
+#     tip: to identify the nodes, use QGIS to have a look a the network  
 infection.asympt.starting.node = 309099188,302013180
 infection.sympt.starting.node  = 309099188
 
@@ -34,7 +40,7 @@ beta        = 0.001
 #epsilon.inv = 1.9
 epsilon.inv = 0.526315789
 p.a         = 0.33
-#mu.inv      = 3
+#mu.inv      = 3 
 mu.inv      = 0.333333333
 max.inf     = 20
 

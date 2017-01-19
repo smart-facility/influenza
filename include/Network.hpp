@@ -18,6 +18,7 @@
 #include <map>
 #include <iostream>
 #include <fstream>
+#include <string>
 
 //! A node class.
 /*!
@@ -125,7 +126,7 @@ public:
 	  _n_infected_nodes = infectedNodes;
   }
 
-  void dumpNodes();
+  void dumpNodes(int aId);
 
 };
 

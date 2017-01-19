@@ -22,7 +22,18 @@
 *.a
 *.lib
 
+# Eclipse files
+.cproject
+.project
+
 # Executables
 *.exe
 *.out
 *.app
+/data/
+/output/
+/logs/
+/bin/influenza
+
+# Dump files
+*dump*

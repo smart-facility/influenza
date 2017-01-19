@@ -36,10 +36,10 @@ void Network::addNode(Node aNode) {
 
 }
 
-void Network::dumpNodes() {
+void Network::dumpNodes(int aId) {
 
 	ofstream f_out;
-	f_out.open("dump_nodes", ios::out);
+	f_out.open("dump_nodes" + to_string(aId), ios::out);
 
 	for( auto n : _Nodes ) {
 

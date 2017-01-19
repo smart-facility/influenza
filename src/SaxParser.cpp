@@ -1,6 +1,6 @@
 #include "../include/SaxParser.hpp"
 #include "../include/Model.hpp"
-
+#include <random>
 
 VBSaxParser::VBSaxParser(int aProc, Model& aModel)
 : xmlpp::SaxParser(), _proc(aProc), _model(aModel) {
@@ -36,8 +36,13 @@ void VBSaxParser::on_start_element(const Glib::ustring& name, const AttributeLis
 		// if activity = m and associated node belongs to the current proc, add the agent to the context
 		if( _model.getMapNodeProcess().at(cur_ind->getHouseNodeId()) == _proc
 				&& cur_ind->getAgenda().size() == 1) {
+		  
+		  // keeping only a proportion of the agents defined by the sample.size input parameter
+		  if ( repast::Random::instance()->nextDouble() < _model.getSampleSize() ) {
 			_model.addAgent(cur_ind);
 			_model.moveAgentToNode(cur_ind->getId(),cur_ind->getHouseNodeId());
+		  }
+			
 		}
 
 	}
