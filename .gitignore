@@ -37,11 +37,9 @@
 *~
 
 # Input/output data and logs
-data/*
 output/*
 logs/*
 
 # Keep the md files
 !*.md
 !*/
-
