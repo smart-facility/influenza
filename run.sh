@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#$ -N influenza -wd $HOME/influenza -pe mpislots 16 -o $HOME/influenza/output/output.$JOB_NAME.$JOB_ID
+#$ -N influenza -wd $HOME/influenza -pe mpislots 8 -o $HOME/influenza/output/output.$JOB_NAME.$JOB_ID
 module load mpi/openmpi/1.10.2/gcc-4.8.5
 module load libs/boost/1.60.0/gcc-4.8.5+openmpi-1.8.5+python-2.7.8
 module load libs/netcdf/4.3.0/gcc-4.8.5+hdf5_serial-1.8.13
